@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conversation avec {{ other_user }}</title>
+    <link rel="stylesheet" href="/static/css/modern-style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-size: 14px; }
+        .container { max-width: 800px; }
+
+        .chat-header {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            padding: 1rem 1.25rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .chat-header-left { display: flex; align-items: center; gap: 0.75rem; }
+        .chat-header-avatar {
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #ffd700, #ffaa00);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #333;
+            font-weight: 700;
+            font-size: 1rem;
+        }
+        .chat-header-info h2 { font-size: 1rem; font-weight: 600; color: var(--text-primary); margin: 0; }
+        .chat-header-info p { font-size: 0.75rem; color: var(--text-muted); margin: 0; }
+        .back-link {
+            font-size: 0.82rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            transition: var(--transition-fast);
+        }
+        .back-link:hover { color: var(--text-primary); }
+
+        .messages-area {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            padding: 1.25rem;
+            height: 420px;
+            overflow-y: auto;
+            margin-bottom: 1rem;
+        }
+
+        .message {
+            margin-bottom: 0.75rem;
+            padding: 0.75rem 1rem;
+            border-radius: 12px;
+            max-width: 75%;
+            font-size: 0.85rem;
+            line-height: 1.5;
+            animation: fadeIn 0.3s ease;
+        }
+        .message.sent {
+            background: linear-gradient(135deg, #ffc107, #e0a800);
+            color: #333;
+            margin-left: auto;
+            border-bottom-right-radius: 4px;
+        }
+        .message.received {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            border-bottom-left-radius: 4px;
+        }
+        .message-header { font-size: 0.7rem; opacity: 0.7; margin-bottom: 0.3rem; }
+
+        .message-input { display: flex; gap: 0.75rem; }
+        .message-input input {
+            flex: 1;
+            padding: 0.7rem 1rem;
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            font-size: 0.85rem;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            transition: var(--transition-fast);
+        }
+        .message-input input:focus { outline: none; border-color: #ffc107; box-shadow: 0 0 0 3px rgba(255, 193, 7, 0.1); }
+        .send-btn {
+            width: 44px; height: 44px;
+            border-radius: 12px; border: none;
+            background: linear-gradient(135deg, #ffc107, #e0a800);
+            color: #333; cursor: pointer;
+            transition: var(--transition-fast);
+            display: flex; align-items: center; justify-content: center;
+        }
+        .send-btn:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+        .send-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+        .quick-nav {
+            display: flex; gap: 0.75rem; justify-content: center; margin-top: 1.5rem; flex-wrap: wrap;
+        }
+        .quick-nav .btn { border-radius: 10px; font-size: 0.82rem; padding: 0.6rem 1.2rem; }
+
+        .empty-chat { text-align: center; padding: 3rem; color: var(--text-muted); }
+        .empty-chat i { font-size: 2rem; margin-bottom: 0.5rem; opacity: 0.5; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="navbar-brand"><i class="fas fa-brain"></i> Formation IA</div>
+        <div class="navbar-nav">
+            <div class="navbar-user">
+                <i class="fas fa-user-circle"></i>
+                <span>{{ session.username }}</span>
+                <span class="badge badge-admin"><i class="fas fa-crown"></i> Admin</span>
+            </div>
+            <a href="{{ url_for('messages') }}" class="navbar-link"><i class="fas fa-comments"></i> Messages</a>
+            <a href="{{ url_for('dashboard') }}" class="navbar-link"><i class="fas fa-chart-line"></i> Dashboard</a>
+            <a href="{{ url_for('index') }}" class="navbar-link"><i class="fas fa-home"></i> Accueil</a>
+            <a href="{{ url_for('logout') }}" class="navbar-link"><i class="fas fa-sign-out-alt"></i> Déconnexion</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="chat-header animate-fade-in">
+            <div class="chat-header-left">
+                <div class="chat-header-avatar">{{ other_user[0]|upper }}</div>
+                <div class="chat-header-info">
+                    <h2>{{ other_user }}</h2>
+                    <p>Conversation</p>
+                </div>
+            </div>
+            <a href="{{ url_for('messages') }}" class="back-link"><i class="fas fa-arrow-left"></i> Retour</a>
+        </div>
+
+        <div class="messages-area" id="messagesArea">
+            {% for message in messages %}
+            <div class="message {% if message.from_user == session.username %}sent{% else %}received{% endif %}">
+                <div class="message-header">
+                    <strong>{{ message.from_user }}</strong> — {{ message.created_at.strftime('%d/%m/%Y %H:%M') }}
+                </div>
+                <div>{{ message.message }}</div>
+            </div>
+            {% endfor %}
+
+            {% if not messages %}
+            <div class="empty-chat">
+                <i class="fas fa-comment-dots"></i>
+                <p>Aucun message. Commencez à discuter avec {{ other_user }} !</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="message-input">
+            <input type="text" id="messageInput" placeholder="Répondre à {{ other_user }}..." maxlength="500" autocomplete="off">
+            <button class="send-btn" id="sendBtn" onclick="sendMessage()">
+                <i class="fas fa-paper-plane"></i>
+            </button>
+        </div>
+
+        <div class="quick-nav">
+            <a href="{{ url_for('messages') }}" class="btn btn-primary"><i class="fas fa-comments"></i> Messages</a>
+            <a href="{{ url_for('dashboard') }}" class="btn btn-secondary"><i class="fas fa-chart-bar"></i> Dashboard</a>
+            <a href="{{ url_for('admin_users') }}" class="btn btn-secondary"><i class="fas fa-users"></i> Utilisateurs</a>
+        </div>
+    </div>
+
+    <button class="theme-toggle" onclick="toggleTheme()"><i class="fas fa-moon"></i></button>
+    <script src="/static/js/theme-toggle.js"></script>
+    <script>
+        let lastMessageId = null;
+        const messagesArea = document.getElementById('messagesArea');
+        messagesArea.scrollTop = messagesArea.scrollHeight;
+
+        document.getElementById('messageInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') sendMessage();
+        });
+
+        async function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const message = input.value.trim();
+            if (!message) return;
+
+            const btn = document.getElementById('sendBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
+            try {
+                const response = await fetch('/send_message', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ message: message, to_user: '{{ other_user }}' })
+                });
+                const result = await response.json();
+                if (result.success) { input.value = ''; await loadNewMessages(); }
+            } catch (error) { console.error('Erreur:', error); }
+            finally { btn.disabled = false; btn.innerHTML = '<i class="fas fa-paper-plane"></i>'; }
+        }
+
+        async function loadNewMessages() {
+            try {
+                const response = await fetch(`/api/get_messages?username={{ other_user }}`);
+                const data = await response.json();
+                if (data.messages && data.messages.length > 0) {
+                    updateMessagesDisplay(data.messages);
+                    messagesArea.scrollTop = messagesArea.scrollHeight;
+                }
+            } catch (error) { console.log('Erreur chargement'); }
+        }
+
+        function updateMessagesDisplay(messages) {
+            const html = messages.map(m => {
+                const cls = m.from_user === '{{ session.username }}' ? 'sent' : 'received';
+                const date = new Date(m.created_at).toLocaleString('fr-FR');
+                return `<div class="message ${cls}"><div class="message-header"><strong>${m.from_user}</strong> — ${date}</div><div>${m.message}</div></div>`;
+            }).join('');
+            messagesArea.innerHTML = html || '<div class="empty-chat"><i class="fas fa-comment-dots"></i><p>Aucun message</p></div>';
+        }
+
+        setInterval(loadNewMessages, 2000);
+    </script>
+</body>
+</html>

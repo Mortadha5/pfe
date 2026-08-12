@@ -1,0 +1,98 @@
+"""Tests pour les routes principales de l'application"""
+
+
+def test_login_page_loads(client):
+    """La page login doit être accessible"""
+    response = client.get('/login')
+    assert response.status_code == 200
+
+
+def test_register_page_redirects(client):
+    """La page register redirige vers login (inscription désactivée)"""
+    response = client.get('/register', follow_redirects=False)
+    assert response.status_code == 302
+
+
+def test_index_requires_login(client):
+    """La page index redirige vers login si non connecté"""
+    response = client.get('/', follow_redirects=False)
+    assert response.status_code == 302
+    assert '/login' in response.location
+
+
+def test_index_loads_when_authenticated(auth_client):
+    """La page index se charge quand on est connecté"""
+    response = auth_client.get('/')
+    assert response.status_code == 200
+
+
+def test_dashboard_requires_admin(auth_client):
+    """Le dashboard est réservé aux admins"""
+    response = auth_client.get('/dashboard')
+    assert response.status_code == 403
+
+
+def test_dashboard_loads_for_admin(admin_client):
+    """Le dashboard se charge pour un admin"""
+    response = admin_client.get('/dashboard')
+    assert response.status_code == 200
+
+
+def test_notifications_page_requires_admin(auth_client):
+    """La page notifications est réservée aux admins"""
+    response = auth_client.get('/notifications')
+    assert response.status_code == 403
+
+
+def test_notifications_unread_count(admin_client):
+    """L'API unread_count retourne un JSON valide"""
+    response = admin_client.get('/api/notifications/unread_count')
+    assert response.status_code == 200
+    data = response.get_json()
+    assert 'count' in data
+
+
+def test_notifications_api(admin_client):
+    """L'API notifications retourne un JSON valide"""
+    response = admin_client.get('/api/notifications')
+    assert response.status_code == 200
+    data = response.get_json()
+    assert 'notifications' in data
+
+
+def test_logout(auth_client):
+    """Le logout redirige vers login"""
+    response = auth_client.get('/logout', follow_redirects=False)
+    assert response.status_code == 302
+
+
+def test_roadmap_page_loads(auth_client):
+    """La page roadmap se charge"""
+    response = auth_client.get('/roadmap')
+    assert response.status_code == 200
+
+
+def test_roadmap_with_formation(auth_client):
+    """La roadmap se charge avec une formation spécifique"""
+    response = auth_client.get('/roadmap?formation=Python')
+    assert response.status_code == 200
+
+
+def test_roadmap_user_progress_api(auth_client):
+    """L'API progression retourne un JSON valide"""
+    response = auth_client.get('/api/roadmap/user_progress?formation=Python')
+    assert response.status_code == 200
+    data = response.get_json()
+    assert data['success'] is True
+
+
+def test_admin_roadmaps_requires_admin(auth_client):
+    """La page admin roadmaps est réservée aux admins"""
+    response = auth_client.get('/admin/roadmaps')
+    assert response.status_code == 403
+
+
+def test_admin_roadmaps_loads(admin_client):
+    """La page admin roadmaps se charge pour un admin"""
+    response = admin_client.get('/admin/roadmaps')
+    assert response.status_code == 200
